@@ -442,8 +442,8 @@ def find_duplicate_images() -> None:
 _MESH_SELECT_ATTRS = ('.select_vert', '.select_edge', '.select_poly')
 
 
-def _mesh_attr_names(mesh: bpy.types.Mesh) -> frozenset[str]:
-    return frozenset(a.name for a in mesh.attributes)
+def _mesh_attr_names(mesh: bpy.types.Mesh) -> set[str]:
+    return {a.name for a in mesh.attributes}
 
 
 def _strip_mesh_select_attrs(meshes: Iterable[bpy.types.Mesh]) -> None:

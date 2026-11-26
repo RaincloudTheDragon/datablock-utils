@@ -446,27 +446,19 @@ def _mesh_attr_names(mesh: bpy.types.Mesh) -> set[str]:
     return {a.name for a in mesh.attributes}
 
 
-def _strip_mesh_select_attrs(meshes: Iterable[bpy.types.Mesh]) -> None:
-    for mesh in meshes:
-        for name in _MESH_SELECT_ATTRS:
-            if name in mesh.attributes:
-                mesh.attributes.remove(mesh.attributes[name])
-
-
 def find_duplicate_meshes() -> None:
     meshes = [m for m in bpy.data.meshes if is_local_id(m)]
-    # 5.2+: strip select attrs then skip pairs with mismatched remaining attr sets.
+    # 5.2+: temporarily strip select attrs then skip pairs with mismatched remaining attr sets.
     use_52_attr_gate = bpy.app.version >= (5, 2, 0)
-    if use_52_attr_gate:
-    attr_copies: defaultdict[bpy.types.Mesh, list[tuple[tuple[str, str, str],
-      list[bool]]]] = defaultdict(list)
+    # Snapshot edit selection so Find does not permanently clear it.
+    attr_copies: defaultdict[bpy.types.Mesh, list[tuple[tuple[str, str, str], list[bool]]]] = defaultdict(list)
     if use_52_attr_gate:
         for mesh in meshes:
             for name in _MESH_SELECT_ATTRS:
                 if name in mesh.attributes:
                     attr = mesh.attributes[name]
                     attr_copies[mesh].append(
-                      ((name, attr.data_type, attr.domain), [i.value for i in attr.data]))
+                        ((name, attr.data_type, attr.domain), [i.value for i in attr.data]))
                     mesh.attributes.remove(attr)
 
     seen = set()
@@ -485,6 +477,7 @@ def find_duplicate_meshes() -> None:
 
             seen.add(frozenset((m1, m2)))
 
+    # Restore edit-selection attrs removed above for compare.
     for mesh, entries in attr_copies.items():
         for args, values in entries:
             new_attr = mesh.attributes.new(*args)

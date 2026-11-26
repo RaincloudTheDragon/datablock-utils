@@ -485,6 +485,11 @@ def find_duplicate_meshes() -> None:
 
             seen.add(frozenset((m1, m2)))
 
+    for mesh, entries in attr_copies.items():
+        for args, values in entries:
+            new_attr = mesh.attributes.new(*args)
+            new_attr.data.foreach_set('value', values)
+
     G = nx.Graph()
     for group in results:
         G.add_edges_from(product(group, group))
